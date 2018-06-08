@@ -1,0 +1,109 @@
+---
+title: "Prediction Assignment"
+author: "Brad Simon"
+date: "8 June 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Practical Machine Learning: Prediction Assignment
+
+One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to determine how well the participant performed the barbell lift. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. 
+
+###Read in and Clean dataset
+
+```{r data}
+#read in the data
+df<- read.csv("H://Coursera/Machine Learning/pml-training.csv", stringsAsFactors = TRUE)
+#remove summary columns / missing values
+df<- df[,c(1:11,37:49,60:68,84:86, 100:160)]
+df<- df[,c(1:36,39,50:61,77,88:97)]
+
+#remove Metadata Columns (times, Identifyers etc)
+
+df<- df[,8:60]
+
+```
+
+### Create Data particion for cross validation
+
+
+```{r Data_Particion, results = "hide"}
+
+library(caret)
+set.seed(13)
+inTrain <- createDataPartition(df$classe, p=0.7, list = FALSE)
+training <- df[inTrain,]
+testing <- df[-inTrain,]
+rm(inTrain)
+
+```
+
+
+###Generate models including all variables:
+
+```{r Model_build, results = "hide", message = FALSE, warning=FALSE}
+
+library(nnet)
+library(rpart)
+library(randomForest)
+
+fit1<- multinom(classe~., data = training) 
+fit2<- train(classe~., data = training, method = "rpart")
+fit3<- randomForest(classe~., data = training) 
+
+```
+
+
+
+### Building in sample predictions and error rates to compare models
+
+```{r In_sample, message = FALSE, warning=FALSE}
+
+pred1<- predict(fit1, newdata = training)
+pred2<- predict(fit2, newdata = training)
+pred3<- predict(fit3, newdata = training)
+
+cfm1<- confusionMatrix(pred1, training$classe)
+cfm2<- confusionMatrix(pred2, training$classe)
+cfm3<- confusionMatrix(pred3, training$classe)
+
+cfm1$table
+cfm1$overall
+
+cfm1$table
+cfm1$overall
+
+cfm1$table
+cfm1$overall
+
+
+```
+
+Whilst the first 2 methods have some predictive value their accuracy within the sample is only around 60%. The random Forest model has 100% accuracy within the training set. This is often the case with this method and there is a risk that the model has been overfitted. The model will need to be tested on the test set before we can have confidence in it. However for this type of data we would expect this method to have reasonable accuracy. 
+
+
+### Choose model and test on the testing data set
+```{r Test_set, message = FALSE, warning=FALSE}
+library(RColorBrewer)
+
+predtest<- predict(fit3, newdata = testing)
+
+cfmtest<- confusionMatrix(predtest, testing$classe)
+cfmtest$table
+cfmtest$overall
+plot(predtest, testing$classe, xlab = "Prediction", ylab = "", yaxt = 'n',col = brewer.pal(5, "Pastel2"))
+legend("topleft", c("A","B","C","D","E"), pch = 15,cex = 1,col = brewer.pal(5,"Pastel2"), title = "Actual Classe")
+axis(side=2,labels=F) 
+```
+
+
+This model is very accurate on the test set with an accuracy of over 99%. This model should be more than sufficient to predict how well the barbell lift is performed in most cases.
+
+
+
