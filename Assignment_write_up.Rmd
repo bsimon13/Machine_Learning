@@ -2,7 +2,9 @@
 title: "Prediction Assignment"
 author: "Brad Simon"
 date: "8 June 2018"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -13,13 +15,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to determine how well the participant performed the barbell lift. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
 
-The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. 
+The data for this project comes from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. 
 
-###Read in and Clean dataset
+### Read in and Clean dataset
+
+The data set contains a number of columns that just summarise the previous values. These columns result in a number of NA Values and are generally unnecesary for our purposes asd any variance that they could help describe would be already accounted for by the other variables. As a result we will remove these columns for the purpose of building our model. There are also a number of columns of meta data that do not have any predictive value but rather describe the collection of the data (time and date, name of participant etc.) These columns will also be removed.
 
 ```{r data}
 #read in the data
-df<- read.csv("H://Coursera/Machine Learning/pml-training.csv", stringsAsFactors = TRUE)
+df<- read.csv("H://Coursera/Machine_Learning/pml-training.csv", stringsAsFactors = TRUE)
 #remove summary columns / missing values
 df<- df[,c(1:11,37:49,60:68,84:86, 100:160)]
 df<- df[,c(1:36,39,50:61,77,88:97)]
@@ -31,7 +35,7 @@ df<- df[,8:60]
 ```
 
 ### Create Data particion for cross validation
-
+In order to validate the model the data has been split into 2 data sets. A training and a test set. The model will be trained on the training set and the test set will only be used to validate the model once it has been finalised.
 
 ```{r Data_Particion, results = "hide"}
 
@@ -45,7 +49,14 @@ rm(inTrain)
 ```
 
 
-###Generate models including all variables:
+### Generate models including all variables:
+
+Here I will look at 3 different methods to build my model.
+1. multinomial
+2. rpart
+3. random forest 
+
+The in sample error rates will be used to assess which model is most suitable for the data.
 
 ```{r Model_build, results = "hide", message = FALSE, warning=FALSE}
 
@@ -62,6 +73,8 @@ fit3<- randomForest(classe~., data = training)
 
 
 ### Building in sample predictions and error rates to compare models
+Here we build predictions based on the training set to find our in sample error rates for comparison.
+
 
 ```{r In_sample, message = FALSE, warning=FALSE}
 
@@ -85,7 +98,7 @@ cfm1$overall
 
 ```
 
-Whilst the first 2 methods have some predictive value their accuracy within the sample is only around 60%. The random Forest model has 100% accuracy within the training set. This is often the case with this method and there is a risk that the model has been overfitted. The model will need to be tested on the test set before we can have confidence in it. However for this type of data we would expect this method to have reasonable accuracy. 
+Whilst the first 2 methods have some predictive value their accuracy within the sample is only around 60%. The random Forest model has 100% accuracy within the training set. This is often the case with this method and there is a risk that the model has been overfitted. The model will need to be tested on the test set before we can have confidence in it. The in sample error rate is 0 however I would expect the out of sample error rate to be slightly higher (0% - 5%) as it is likely there is some level of overfitting in this instance. 
 
 
 ### Choose model and test on the testing data set
@@ -103,7 +116,7 @@ axis(side=2,labels=F)
 ```
 
 
-This model is very accurate on the test set with an accuracy of over 99%. This model should be more than sufficient to predict how well the barbell lift is performed in most cases.
+The out of sample error rate is still less than 1% which is vert good. This model should be more than sufficient to predict how well the barbell lift is performed in most cases.
 
 
 

@@ -1,5 +1,5 @@
 #read in the data
-df<- read.csv("H://Coursera/Machine Learning/pml-training.csv", stringsAsFactors = TRUE)
+df<- read.csv("H://Coursera/Machine_Learning/pml-training.csv", stringsAsFactors = TRUE)
 #remove summary columns / missing values
 df<- df[,c(1:11,37:49,60:68,84:86, 100:160)]
 df<- df[,c(1:36,39,50:61,77,88:97)]
